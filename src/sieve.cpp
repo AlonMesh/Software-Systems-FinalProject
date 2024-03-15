@@ -2,6 +2,9 @@
 #include <cmath>
 #include <iostream> // TODO: Remove this line.
 
+// Define the maximum limit as 12^10
+#define MAX_LIMIT 61917364224
+
 bool validateInput(long long limit)
 {
     if (limit <= 1) {
@@ -9,17 +12,14 @@ bool validateInput(long long limit)
         return false;
     }
 
+    if (limit > MAX_LIMIT) {
+        printErrorMessage("Please enter a number less than or equal to 61917364224.");
+        return false;
+    }
+
     return true;
 }
 
-/**
- * @brief Sieve of Eratosthenes algorithm.
- *
- * This function implements the sieve of Eratosthenes algorithm to find all prime numbers less than or equal to a given limit.
- *
- * @param limit The limit to find prime numbers up to.
- * @return A vector of prime numbers less than or equal to the limit.
- */
 std::vector<long long> sieveOfEratosthenes(long long limit)
 {
     // Check if the input is valid.

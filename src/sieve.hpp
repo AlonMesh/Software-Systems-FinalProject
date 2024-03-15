@@ -15,12 +15,11 @@ std::vector<long long> sieveOfEratosthenes(long long limit);
 
 /**
  * @brief Validate the input.
- *
- * This function validates the input to ensure it is greater than 1.
- *
+ * 
+ * This function validates the input to ensure that it is a valid number.
+ * 
  * @param limit The limit to validate.
- * @return True if the input is valid, false otherwise.
- */
+*/
 bool validateInput(long long limit);
 
 #endif // SIEVE_HPP

@@ -1,9 +1,12 @@
-#define DOCTEST_CONFIG_IMPLEMENT
 #include "doctest.h"
 #include "../src/sieve.hpp"
+#include <iostream>
 
 TEST_CASE("sieveOfEratosthenes")
 {
+    // Print the name of the test case.
+    std::cout << "Test case: sieveOfEratosthenes" << std::endl;
+    
     SUBCASE("Test with limit 50")
     {
         // Test the sieve of Eratosthenes algorithm.
@@ -27,15 +30,16 @@ TEST_CASE("sieveOfEratosthenes")
         // Test the sieve of Eratosthenes algorithm with invalid input.
         CHECK(sieveOfEratosthenes(0) == std::vector<long long>{});
         CHECK(sieveOfEratosthenes(-1) == std::vector<long long>{});
+        CHECK(sieveOfEratosthenes(61917364224 + 1) == std::vector<long long>{});
     }
 
-    // SUBCASE("Test with large limit")
-    // {
-    //     // Test the sieve of Eratosthenes algorithm with a large limit.
-    //     CHECK(sieveOfEratosthenes(1000000).size() == 78498);
-    // }
+    SUBCASE("Test with large limit")
+    {
+        // Test the sieve of Eratosthenes algorithm with a large limit.
+        CHECK(sieveOfEratosthenes(1000000).size() == 78498);
+    }
 
-    // SUBCASE("Test with very large limit")
+    // SUBCASE("Test with very large limit") // It takes too long to run.
     // {
     //     // Test the sieve of Eratosthenes algorithm with a very large limit.
     //     CHECK(sieveOfEratosthenes(1000000000).size() == 50847534);

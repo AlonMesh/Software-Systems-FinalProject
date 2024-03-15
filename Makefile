@@ -1,48 +1,47 @@
-# Makefile for compiling C++ files, running main and test, and cleaning
+CXX = g++
+SRC_DIR = src
+TEST_DIR = tests
+BUILD_DIR = build
 
-# Compiler and flags
-CXX := g++
-CXXFLAGS := -std=c++11 -Wall
+SRCS := $(wildcard $(SRC_DIR)/*.cpp)
+OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SRCS))
+TEST_SRCS := $(filter-out $(TEST_DIR)/TestRunner.cpp, $(wildcard $(TEST_DIR)/*.cpp))
+TEST_OBJS := $(patsubst $(TEST_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(TEST_SRCS))
 
-# Directories
-SRC_DIR := src
-OBJ_DIR := obj
-TEST_DIR := tests
-BIN_DIR := bin
+CXXFLAGS = -std=c++11 -Wall -Wextra -I$(SRC_DIR)
 
-# Source files
-SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)
-OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC_FILES))
+# Main program
+MAIN_SRC := $(SRC_DIR)/main.cpp
+MAIN_OBJ := $(BUILD_DIR)/main.o
+MAIN_TARGET := $(BUILD_DIR)/main
 
-# Test source file
-TEST_SRC := $(TEST_DIR)/test.cpp
+# Test program
+TEST_TARGET := $(BUILD_DIR)/test
+TEST_RUNNER := $(TEST_DIR)/TestRunner.cpp
 
-# Executables
-MAIN := $(BIN_DIR)/main
-TEST := $(BIN_DIR)/test
+all: $(MAIN_TARGET) $(TEST_TARGET)
 
-# Targets
-all: $(MAIN) $(TEST)
-
-$(MAIN): $(OBJ_FILES)
-	@mkdir -p $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) -o $@ $^
-
-$(TEST): $(OBJ_FILES) $(TEST_SRC)
-	@mkdir -p $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) -o $@ $^
-
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@mkdir -p $(OBJ_DIR)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-run-main: $(MAIN)
-	./$(MAIN) $(ARGS)
-	
-run-test: $(TEST)
-	./$(TEST) 10
+$(BUILD_DIR)/%.o: $(TEST_DIR)/%.cpp
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(MAIN_TARGET): $(OBJS) $(MAIN_OBJ)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+$(TEST_TARGET): $(OBJS) $(TEST_OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $(TEST_RUNNER) $(filter-out $(MAIN_OBJ), $^)
+
+run: $(MAIN_TARGET)
+	./$(MAIN_TARGET) $(ARGS)
+
+test: $(TEST_TARGET)
+	./$(TEST_TARGET)
 
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR)
+	rm -rf $(BUILD_DIR)
 
-.PHONY: all run-main run-test clean
+.PHONY: all run test clean
