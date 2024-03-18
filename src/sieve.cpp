@@ -5,6 +5,23 @@
 // Define the maximum limit as 12^10
 #define MAX_LIMIT 61917364224
 
+int main(int argc, char *argv[]) {
+    // Check if the number of command-line arguments is correct.
+    if (argc != 2) {
+        printUsage(argv[0]);
+        return 1;
+    }
+
+    // Convert the command-line argument to a long long.
+    long long limit = convertToLongLong(argv[1]);
+
+    // Run the Sieve of Eratosthenes algorithm.
+    sieveOfEratosthenes(limit);
+
+    // Exit the program successfully.
+    return 0;
+}
+
 bool validateInput(long long limit)
 {
     if (limit <= 1) {

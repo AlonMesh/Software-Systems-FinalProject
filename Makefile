@@ -8,16 +8,12 @@ OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SRCS))
 TEST_SRCS := $(filter-out $(TEST_DIR)/TestRunner.cpp, $(wildcard $(TEST_DIR)/*.cpp))
 TEST_OBJS := $(patsubst $(TEST_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(TEST_SRCS))
 
-# Exclude main, client, and server objects from OBJS for specific targets
-MAIN_EXCLUDES := $(BUILD_DIR)/main.o $(BUILD_DIR)/client.o $(BUILD_DIR)/server.o
-COMMON_OBJS := $(filter-out $(MAIN_EXCLUDES), $(OBJS))
-
 CXXFLAGS = -std=c++11 -Wall -Wextra -I$(SRC_DIR)
 
-# Main program
-MAIN_SRC := $(SRC_DIR)/main.cpp
-MAIN_OBJ := $(BUILD_DIR)/main.o
-MAIN_TARGET := $(BUILD_DIR)/main
+# Sieve program (previously Main program)
+SIEVE_SRC := $(SRC_DIR)/sieve.cpp
+SIEVE_OBJ := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SIEVE_SRC))
+SIEVE_TARGET := $(BUILD_DIR)/sieve
 
 # Client program
 CLIENT_SRC := $(SRC_DIR)/client.cpp
@@ -33,7 +29,8 @@ SERVER_TARGET := $(BUILD_DIR)/server
 TEST_TARGET := $(BUILD_DIR)/test
 TEST_RUNNER := $(TEST_DIR)/TestRunner.cpp
 
-all: $(MAIN_TARGET) $(CLIENT_TARGET) $(SERVER_TARGET) $(TEST_TARGET)
+# Updating all target to build sieve, client, server, and test
+all: $(SIEVE_TARGET) $(CLIENT_TARGET) $(SERVER_TARGET) $(TEST_TARGET)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(@D)
@@ -43,20 +40,21 @@ $(BUILD_DIR)/%.o: $(TEST_DIR)/%.cpp
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(MAIN_TARGET): $(COMMON_OBJS) $(MAIN_OBJ)
+$(SIEVE_TARGET): $(filter-out $(BUILD_DIR)/client.o $(BUILD_DIR)/server.o, $(OBJS))
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-$(CLIENT_TARGET): $(CLIENT_OBJ) $(filter-out $(MAIN_OBJ), $(COMMON_OBJS))
+$(CLIENT_TARGET): $(filter-out $(BUILD_DIR)/server.o $(BUILD_DIR)/sieve.o, $(OBJS))
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-$(SERVER_TARGET): $(SERVER_OBJ) $(filter-out $(MAIN_OBJ), $(COMMON_OBJS))
+$(SERVER_TARGET): $(filter-out $(BUILD_DIR)/client.o $(BUILD_DIR)/sieve.o, $(OBJS))
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-$(TEST_TARGET): $(COMMON_OBJS) $(TEST_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $(TEST_RUNNER) $(filter-out $(MAIN_OBJ), $^)
+# TODO: Make the test target to build the test executable
+$(TEST_TARGET): $(TEST_RUNNER) $(TEST_OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $(TEST_RUNNER) $(TEST_OBJS) $(filter-out $(BUILD_DIR)/sieve.o, $(OBJS)) 
 
-run: $(MAIN_TARGET)
-	./$(MAIN_TARGET) $(ARGS)
+sieve: $(SIEVE_TARGET)
+	./$(SIEVE_TARGET)
 
 client: $(CLIENT_TARGET)
 	./$(CLIENT_TARGET)
@@ -70,4 +68,4 @@ test: $(TEST_TARGET)
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: all run client server test clean
+.PHONY: all sieve client server test clean

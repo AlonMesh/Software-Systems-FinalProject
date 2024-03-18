@@ -4,14 +4,16 @@ Run:
 make all
 ```
 
+-----
+
 Then:
 ```bash
-make run ARGS=30
+/build/sieve 12
 ```
 
 Or:
 ```bash
-make test
+./build/test
 ```
 
 -----
@@ -25,3 +27,9 @@ To run the client:
 ```bash
 ./build/client 127.0.0.1 12345 42 1
 ```
+
+Where:
+* `127.0.0.1` is the IP address of the server
+* `12345` is the port number where the server is listening for incoming connections
+* `42` is the seed value for the random number generator used by the client
+* `1` is the delay (in seconds) between requests
