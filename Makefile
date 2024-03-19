@@ -25,12 +25,17 @@ SERVER_SRC := $(SRC_DIR)/server.cpp
 SERVER_OBJ := $(BUILD_DIR)/server.o
 SERVER_TARGET := $(BUILD_DIR)/server
 
+# Launcher program
+LAUNCHER_SRC := $(SRC_DIR)/launcher.cpp
+LAUNCHER_OBJ := $(BUILD_DIR)/launcher.o
+LAUNCHER_TARGET := $(BUILD_DIR)/launcher
+
 # Test program
 TEST_TARGET := $(BUILD_DIR)/test
 TEST_RUNNER := $(TEST_DIR)/TestRunner.cpp
 
-# Updating all target to build sieve, client, server, and test
-all: $(SIEVE_TARGET) $(CLIENT_TARGET) $(SERVER_TARGET) $(TEST_TARGET)
+# Updating all target to build sieve, client, server, launcher, and test
+all: $(SIEVE_TARGET) $(CLIENT_TARGET) $(SERVER_TARGET) $(LAUNCHER_TARGET) $(TEST_TARGET)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(@D)
@@ -40,18 +45,21 @@ $(BUILD_DIR)/%.o: $(TEST_DIR)/%.cpp
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(SIEVE_TARGET): $(filter-out $(BUILD_DIR)/client.o $(BUILD_DIR)/server.o, $(OBJS))
+$(SIEVE_TARGET): $(filter-out $(BUILD_DIR)/client.o $(BUILD_DIR)/server.o $(BUILD_DIR)/launcher.o, $(OBJS))
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-$(CLIENT_TARGET): $(filter-out $(BUILD_DIR)/server.o $(BUILD_DIR)/sieve.o, $(OBJS))
+$(CLIENT_TARGET): $(filter-out $(BUILD_DIR)/server.o $(BUILD_DIR)/sieve.o $(BUILD_DIR)/launcher.o, $(OBJS))
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-$(SERVER_TARGET): $(filter-out $(BUILD_DIR)/client.o $(BUILD_DIR)/sieve.o, $(OBJS))
+$(SERVER_TARGET): $(filter-out $(BUILD_DIR)/client.o $(BUILD_DIR)/sieve.o $(BUILD_DIR)/launcher.o, $(OBJS))
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+$(LAUNCHER_TARGET): $(filter-out $(BUILD_DIR)/client.o $(BUILD_DIR)/sieve.o $(BUILD_DIR)/server.o, $(OBJS))
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 # TODO: Make the test target to build the test executable
 $(TEST_TARGET): $(TEST_RUNNER) $(TEST_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $(TEST_RUNNER) $(TEST_OBJS) $(filter-out $(BUILD_DIR)/sieve.o, $(OBJS)) 
+	$(CXX) $(CXXFLAGS) -o $@ $(TEST_RUNNER) $(TEST_OBJS) $(filter-out $(BUILD_DIR)/sieve.o $(BUILD_DIR)/launcher.o $(BUILD_DIR)/client.o $(BUILD_DIR)/server.o, $(OBJS)) 
 
 sieve: $(SIEVE_TARGET)
 	./$(SIEVE_TARGET)
@@ -62,10 +70,13 @@ client: $(CLIENT_TARGET)
 server: $(SERVER_TARGET)
 	./$(SERVER_TARGET)
 
+launcher: $(LAUNCHER_TARGET)
+	./$(LAUNCHER_TARGET)
+
 test: $(TEST_TARGET)
 	./$(TEST_TARGET)
 
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: all sieve client server test clean
+.PHONY: all sieve client server launcher test clean
