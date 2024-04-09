@@ -72,7 +72,13 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "variant": "cpp",
-        "climits": "cpp"
+        "climits": "cpp",
+        "forward_list": "cpp",
+        "buffer": "cpp",
+        "executor": "cpp",
+        "io_context": "cpp",
+        "netfwd": "cpp",
+        "socket": "cpp"
     },
     "CodeGPT.apiKey": "CodeGPT Plus Beta"
 }
