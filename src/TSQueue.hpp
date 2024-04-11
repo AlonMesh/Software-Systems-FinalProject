@@ -25,6 +25,9 @@ public:
 
     // Pops an element off the queue
     T pop();
+
+    // Returns if the queue is empty
+    bool empty();
 };
 
 #endif /* TSQUEUE_HPP */

@@ -29,3 +29,12 @@ T TSQueue<T>::pop() {
     // Return item
     return item;
 }
+
+template <typename T>
+bool TSQueue<T>::empty() {
+    // Acquire lock
+    std::unique_lock<std::mutex> lock(m_mutex);
+
+    // Check if queue is empty
+    return m_queue.empty();
+}

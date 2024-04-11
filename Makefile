@@ -30,17 +30,17 @@ LAUNCHER_SRC := $(SRC_DIR)/launcher.cpp
 LAUNCHER_OBJ := $(BUILD_DIR)/launcher.o
 LAUNCHER_TARGET := $(BUILD_DIR)/launcher
 
-# ServerWAO program
-SERVERWAO_SRC := $(SRC_DIR)/ServerWithActiveObjects.cpp
-SERVERWAO_OBJ := $(BUILD_DIR)/ServerWithActiveObjects.o
-SERVERWAO_TARGET := $(BUILD_DIR)/serverWAO
+# Add the new source files to your definitions
+PIPELINE_SRCS := $(SRC_DIR)/Pipeline.cpp $(SRC_DIR)/TSQueue.cpp $(SRC_DIR)/ActiveObject.cpp
+PIPELINE_OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(PIPELINE_SRCS))
+PIPELINE_TARGET := $(BUILD_DIR)/pipeline
 
 # Test program
 TEST_TARGET := $(BUILD_DIR)/test
 TEST_RUNNER := $(TEST_DIR)/TestRunner.cpp
 
 # Updating all target to build sieve, client, server, launcher, and test
-all: $(SIEVE_TARGET) $(CLIENT_TARGET) $(SERVER_TARGET) $(LAUNCHER_TARGET) $(TEST_TARGET) $(SERVERWAO_TARGET)
+all: $(SIEVE_TARGET) $(CLIENT_TARGET) $(SERVER_TARGET) $(LAUNCHER_TARGET) $(TEST_TARGET) $(PIPELINE_OBJS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(@D)
@@ -50,24 +50,24 @@ $(BUILD_DIR)/%.o: $(TEST_DIR)/%.cpp
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(SIEVE_TARGET): $(SIEVE_OBJ) $(filter-out $(CLIENT_OBJ) $(SERVER_OBJ) $(LAUNCHER_OBJ) $(SERVERWAO_OBJ), $(OBJS))
+$(SIEVE_TARGET): $(SIEVE_OBJ) $(filter-out $(CLIENT_OBJ) $(SERVER_OBJ) $(LAUNCHER_OBJ) $(PIPELINE_OBJS), $(OBJS))
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-$(CLIENT_TARGET): $(CLIENT_OBJ) $(filter-out $(SIEVE_OBJ) $(SERVER_OBJ) $(LAUNCHER_OBJ) $(SERVERWAO_OBJ), $(OBJS))
+$(CLIENT_TARGET): $(CLIENT_OBJ) $(filter-out $(SIEVE_OBJ) $(SERVER_OBJ) $(LAUNCHER_OBJ) $(PIPELINE_OBJS), $(OBJS))
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-$(SERVER_TARGET): $(SERVER_OBJ) $(filter-out $(SIEVE_OBJ) $(CLIENT_OBJ) $(LAUNCHER_OBJ) $(SERVERWAO_OBJ), $(OBJS))
+$(SERVER_TARGET): $(SERVER_OBJ) $(filter-out $(SIEVE_OBJ) $(CLIENT_OBJ) $(LAUNCHER_OBJ) $(PIPELINE_OBJS), $(OBJS))
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-$(LAUNCHER_TARGET): $(LAUNCHER_OBJ) $(filter-out $(SIEVE_OBJ) $(CLIENT_OBJ) $(SERVER_OBJ) $(SERVERWAO_OBJ), $(OBJS))
+$(LAUNCHER_TARGET): $(LAUNCHER_OBJ) $(filter-out $(SIEVE_OBJ) $(CLIENT_OBJ) $(SERVER_OBJ) $(PIPELINE_OBJS), $(OBJS))
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-$(SERVERWAO_TARGET): $(SERVERWAO_OBJ) $(filter-out $(SIEVE_OBJ) $(CLIENT_OBJ) $(SERVER_OBJ) $(LAUNCHER_OBJ), $(OBJS))
+$(PIPELINE_TARGET): $(PIPELINE_OBJS) $(filter-out $(SIEVE_OBJ) $(CLIENT_OBJ) $(SERVER_OBJ) $(LAUNCHER_OBJ), $(OBJS))
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 # TODO: Make the test target to build the test executable
 $(TEST_TARGET): $(TEST_RUNNER) $(TEST_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(filter-out $(SIEVE_OBJ) $(LAUNCHER_OBJ) $(CLIENT_OBJ) $(SERVER_OBJ) $(SERVERWAO_OBJ), $(OBJS))
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(filter-out $(SIEVE_OBJ) $(LAUNCHER_OBJ) $(CLIENT_OBJ) $(SERVER_OBJ) $(PIPELINE_OBJS), $(OBJS))
 
 sieve: $(SIEVE_TARGET)
 	./$(SIEVE_TARGET)
@@ -81,8 +81,8 @@ server: $(SERVER_TARGET)
 launcher: $(LAUNCHER_TARGET)
 	./$(LAUNCHER_TARGET)
 
-serverWAO: $(SERVERWAO_TARGET)
-	./$(SERVERWAO_TARGET)
+pipeline: $(PIPELINE_TARGET)
+	./$(PIPELINE_TARGET)
 
 test: $(TEST_TARGET)
 	./$(TEST_TARGET)
@@ -90,4 +90,6 @@ test: $(TEST_TARGET)
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: all sieve client server launcher serverWAO test clean
+all: $(SIEVE_TARGET) $(CLIENT_TARGET) $(SERVER_TARGET) $(LAUNCHER_TARGET) $(TEST_TARGET) $(PIPELINE_TARGET)
+
+.PHONY: all sieve client server launcher test pipeline clean

@@ -78,7 +78,8 @@
         "executor": "cpp",
         "io_context": "cpp",
         "netfwd": "cpp",
-        "socket": "cpp"
+        "socket": "cpp",
+        "*.ipp": "cpp"
     },
     "CodeGPT.apiKey": "CodeGPT Plus Beta"
 }

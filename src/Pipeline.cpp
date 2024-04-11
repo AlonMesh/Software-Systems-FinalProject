@@ -1,11 +1,17 @@
 #include "Pipeline.hpp"
 #include "TSQueue.hpp"
 #include "ActiveObject.hpp"
+#include <iostream>
+#include <cstring>
+#include <cstdlib>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
 
 #define MAX_CLIENTS 10
 #define BUFFER_SIZE 1024
 
-void Server::stop() {
+void Pipeline::stop() {
     m_running = false;
     close(m_serverSocket);
     for (auto& activeObject : m_activeObjects) {
@@ -13,7 +19,7 @@ void Server::stop() {
     }
 }
 
-int Server::startServer(int port) {
+int Pipeline::startServer(int port) {
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket < 0) {
         perror("Socket creation failed");
@@ -36,18 +42,14 @@ int Server::startServer(int port) {
     }
 
     m_running = true;
-    std::thread listenThread(&Server::listenForConnections, this);
+    std::thread listenThread(&Pipeline::listenForConnections, this);
     listenThread.detach();
 
-    m_activeObjects.emplace_back(&m_newConnectionsQueue, std::bind(&Server::receiveMessages, this));
-    m_activeObjects.emplace_back(&m_processingQueue, std::bind(&Server::processMessages, this));
-
-    for (auto& activeObject : m_activeObjects) {
-        activeObject.start();
-    }
+    m_activeObjects.emplace_back(&m_newConnectionsQueue, std::bind(&Pipeline::receiveMessages, this));
+    m_activeObjects.emplace_back(&m_processingQueue, std::bind(&Pipeline::processMessages, this));
 }
 
-void Server::listenForConnections() {
+void Pipeline::listenForConnections() {
     while (m_running) {
         struct sockaddr_in clientAddr;
         socklen_t clientLen = sizeof(clientAddr);
@@ -60,7 +62,7 @@ void Server::listenForConnections() {
     }
 }
 
-void Server::receiveMessages() {
+void Pipeline::receiveMessages() {
     fd_set readfds;
     while (m_running) {
         FD_ZERO(&readfds);
@@ -96,7 +98,7 @@ void Server::receiveMessages() {
 }
 
 
-void Server::processMessages() {
+void Pipeline::processMessages() {
     while (m_running) {
         auto message = m_processingQueue.pop();
         int clientSocket = message.first;
@@ -118,7 +120,7 @@ void Server::processMessages() {
     }
 }
 
-bool Server::isPrime(long long number) {
+bool Pipeline::isPrime(long long number) {
     if (number <= 1) return false;
     if (number <= 3) return true;
     if (number % 2 == 0 || number % 3 == 0) return false;
@@ -135,7 +137,9 @@ int main(int argc, char *argv[]) {
     }
 
     int port = std::stoi(argv[1]);
-    startServer(port)
+
+    Pipeline pipeline; // Create an instance of Pipeline
+    pipeline.startServer(port); // Call startServer on the instance
 
     return 0;
 }

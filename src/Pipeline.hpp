@@ -4,7 +4,7 @@
 #include "TSQueue.hpp"
 #include "ActiveObject.hpp"
 
-class Server {
+class Pipeline {
 public:
     void stop();
     int startServer(int port);
