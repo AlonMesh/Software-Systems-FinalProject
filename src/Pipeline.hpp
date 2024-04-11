@@ -1,5 +1,5 @@
 #ifndef PIPELINE_HPP
-#define PIPELINE_HPPvvvvv
+#define PIPELINE_HPP
 
 #include "TSQueue.hpp"
 #include "ActiveObject.hpp"

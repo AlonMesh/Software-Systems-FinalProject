@@ -64,28 +64,28 @@ void Server::receiveMessages() {
     fd_set readfds;
     while (m_running) {
         FD_ZERO(&readfds);
-        int maxFd = 0;
 
         // Add client sockets to set
-        for (int clientSocket : m_newConnectionsQueue.getCopyOfQueue()) {
+        while (!m_newConnectionsQueue.empty()) {
+            int clientSocket = m_newConnectionsQueue.pop();
             FD_SET(clientSocket, &readfds);
-            maxFd = std::max(maxFd, clientSocket);
         }
 
         // Wait for activity on sockets
-        if (select(maxFd + 1, &readfds, NULL, NULL, NULL) < 0) {
+        if (select(FD_SETSIZE, &readfds, NULL, NULL, NULL) < 0) {
             perror("Select error");
             continue;
         }
 
-        for (int clientSocket : m_newConnectionsQueue.getCopyOfQueue()) {
+        for (int clientSocket = 0; clientSocket < FD_SETSIZE; ++clientSocket) {
             if (FD_ISSET(clientSocket, &readfds)) {
                 char buffer[BUFFER_SIZE];
                 ssize_t bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0);
                 if (bytesRead <= 0) {
                     // Handle disconnect or error
                     close(clientSocket);
-                    m_newConnectionsQueue.remove(clientSocket);
+                    // Remove clientSocket from m_newConnectionsQueue if needed
+                    // Note: You might need to implement a method to remove a specific element from TSQueue
                 } else {
                     buffer[bytesRead] = '\0'; // Null-terminate the string
                     m_processingQueue.push({clientSocket, std::string(buffer)});
@@ -94,6 +94,7 @@ void Server::receiveMessages() {
         }
     }
 }
+
 
 void Server::processMessages() {
     while (m_running) {
