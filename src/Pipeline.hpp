@@ -7,7 +7,7 @@
 class Pipeline {
 public:
     void stop();
-    int startServer(int port);
+    void startServer(int port);
 
 private:
     int setupSocket(int port);
@@ -19,7 +19,6 @@ private:
     int m_serverSocket;
     TSQueue<int> m_newConnectionsQueue;
     TSQueue<std::pair<int, std::string>> m_processingQueue;
-    std::vector<ActiveObject<int>> m_activeObjects;
     bool m_running;
 };
 

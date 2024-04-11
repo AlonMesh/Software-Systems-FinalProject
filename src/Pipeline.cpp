@@ -11,15 +11,15 @@
 #define MAX_CLIENTS 10
 #define BUFFER_SIZE 1024
 
-void Pipeline::stop() {
-    m_running = false;
-    close(m_serverSocket);
-    for (auto& activeObject : m_activeObjects) {
-        activeObject.stop();
-    }
-}
+// void Pipeline::stop() {
+//     m_running = false;
+//     close(m_serverSocket);
+//     for (auto& activeObject : m_activeObjects) {
+//         activeObject.stop();
+//     }
+// }
 
-int Pipeline::startServer(int port) {
+void Pipeline::startServer(int port) {
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket < 0) {
         perror("Socket creation failed");
@@ -45,8 +45,8 @@ int Pipeline::startServer(int port) {
     std::thread listenThread(&Pipeline::listenForConnections, this);
     listenThread.detach();
 
-    m_activeObjects.emplace_back(&m_newConnectionsQueue, std::bind(&Pipeline::receiveMessages, this));
-    m_activeObjects.emplace_back(&m_processingQueue, std::bind(&Pipeline::processMessages, this));
+    ActiveObject<int> reciver(&m_newConnectionsQueue, std::bind(&Pipeline::receiveMessages, this));
+    ActiveObject<std::pair<int, std::string>> processor(&m_processingQueue, std::bind(&Pipeline::processMessages, this));
 }
 
 void Pipeline::listenForConnections() {

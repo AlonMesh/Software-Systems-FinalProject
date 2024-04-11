@@ -40,7 +40,7 @@ TEST_TARGET := $(BUILD_DIR)/test
 TEST_RUNNER := $(TEST_DIR)/TestRunner.cpp
 
 # Updating all target to build sieve, client, server, launcher, and test
-all: $(SIEVE_TARGET) $(CLIENT_TARGET) $(SERVER_TARGET) $(LAUNCHER_TARGET) $(TEST_TARGET) $(PIPELINE_OBJS)
+all: $(SIEVE_TARGET) $(CLIENT_TARGET) $(SERVER_TARGET) $(LAUNCHER_TARGET) $(PIPELINE_OBJS) $(TEST_TARGET)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(@D)
@@ -90,6 +90,6 @@ test: $(TEST_TARGET)
 clean:
 	rm -rf $(BUILD_DIR)
 
-all: $(SIEVE_TARGET) $(CLIENT_TARGET) $(SERVER_TARGET) $(LAUNCHER_TARGET) $(TEST_TARGET) $(PIPELINE_TARGET)
+all: $(SIEVE_TARGET) $(CLIENT_TARGET) $(SERVER_TARGET) $(LAUNCHER_TARGET) $(PIPELINE_TARGET) $(TEST_TARGET)
 
 .PHONY: all sieve client server launcher test pipeline clean

@@ -44,3 +44,14 @@ Where:
 * `12345` is the port number where the server is listening for incoming connections
 * `5` is the number of clients
 * `1` is the delay (in seconds) between requests
+
+
+---------
+
+```bash
+make pipeline
+```
+
+```bash
+
+```
