@@ -13,4 +13,15 @@
  */
 void startClient(const char* serverAddress, int port, unsigned int seed, int timeSkip);
 
+/**
+ * @brief Validate command-line arguments.
+ *
+ * This function validates the command-line arguments.
+ *
+ * @param argc The number of arguments.
+ * @param argv The arguments.
+ * @return True if the arguments are valid, false otherwise.
+ */
+bool validateArguments(int argc, char* argv[]);
+
 #endif // CLIENT_HPP
