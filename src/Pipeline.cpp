@@ -1,12 +1,4 @@
 #include "Pipeline.hpp"
-#include "TSQueue.hpp"
-#include "ActiveObject.hpp"
-#include <iostream>
-#include <cstring>
-#include <cstdlib>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
 
 #define MAX_CLIENTS 10
 #define BUFFER_SIZE 1024
@@ -20,6 +12,7 @@
 // }
 
 void Pipeline::startServer(int port) {
+
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket < 0) {
         perror("Socket creation failed");
@@ -41,56 +34,82 @@ void Pipeline::startServer(int port) {
         exit(EXIT_FAILURE);
     }
 
+    // Connection successful
+    std::cout << "Server listening on port " << port << std::endl;
+
     m_running = true;
-    std::thread listenThread(&Pipeline::listenForConnections, this);
+    std::thread listenThread(&Pipeline::listenForConnections, this, serverSocket);
     listenThread.detach();
 
-    ActiveObject<int> reciver(&m_newConnectionsQueue, std::bind(&Pipeline::receiveMessages, this));
-    ActiveObject<std::pair<int, std::string>> processor(&m_processingQueue, std::bind(&Pipeline::processMessages, this));
+    std::thread receiveThread(&Pipeline::receiveMessages, this);
+    receiveThread.detach();
+
+    ActiveObject<std::pair<int, long long>> processor(&m_processingQueue, std::bind(&Pipeline::processMessages, this, std::placeholders::_1));
 }
 
-void Pipeline::listenForConnections() {
+void Pipeline::listenForConnections(int serverSocket) {
     while (m_running) {
         struct sockaddr_in clientAddr;
         socklen_t clientLen = sizeof(clientAddr);
-        int newClientSocket = accept(m_serverSocket, (struct sockaddr*)&clientAddr, &clientLen);
+        int newClientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &clientLen);
         if (newClientSocket < 0) {
             perror("Accepting connection failed");
             continue;
         }
         m_newConnectionsQueue.push(newClientSocket);
+        std::cout << "got a new client with fd num: " << newClientSocket <<std::endl;
     }
 }
 
 void Pipeline::receiveMessages() {
-    fd_set readfds;
-    while (m_running) {
-        FD_ZERO(&readfds);
+    timeval timeout;
+    timeout.tv_sec = 2;
+    timeout.tv_usec = 0;
 
-        // Add client sockets to set
+    fd_set readfds;
+    FD_ZERO(&readfds);
+    int maxfd = 0;
+
+    while (true) {
         while (!m_newConnectionsQueue.empty()) {
-            int clientSocket = m_newConnectionsQueue.pop();
-            FD_SET(clientSocket, &readfds);
+            int clientSocket = m_newConnectionsQueue.front(); // Get the front element
+            m_newConnectionsQueue.pop(); // Remove the front element
+            FD_SET(clientSocket, &readfds); //Add it to the fd set
+            maxfd = std::max(maxfd, clientSocket); // Update maxfd
+
+//            std::cout << clientSocket <<std::endl;
+
         }
+//        std::cout << "here!" <<std::endl;
 
         // Wait for activity on sockets
-        if (select(FD_SETSIZE, &readfds, NULL, NULL, NULL) < 0) {
+        int result = select(maxfd+1, &readfds, NULL, NULL, &timeout);
+//        std::cout << "Select result: "<< result << std::endl;
+        if (result < 0) {
             perror("Select error");
-            continue;
-        }
-
-        for (int clientSocket = 0; clientSocket < FD_SETSIZE; ++clientSocket) {
-            if (FD_ISSET(clientSocket, &readfds)) {
-                char buffer[BUFFER_SIZE];
-                ssize_t bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0);
-                if (bytesRead <= 0) {
-                    // Handle disconnect or error
-                    close(clientSocket);
-                    // Remove clientSocket from m_newConnectionsQueue if needed
-                    // Note: You might need to implement a method to remove a specific element from TSQueue
-                } else {
-                    buffer[bytesRead] = '\0'; // Null-terminate the string
-                    m_processingQueue.push({clientSocket, std::string(buffer)});
+            return;
+        } else if(result == 0){
+//            std::cout << "no messages" <<std::endl;
+        } else if(result >= 1){
+            for (int fd = 0; fd <= maxfd; ++fd) {
+                if (FD_ISSET(fd, &readfds)) { // Got message!
+                    std::cout << "message from fd num: " << fd <<std::endl;
+                    long long number;
+                    ssize_t bytesRead = recv(fd, &number, sizeof(number), 0);
+                    if (bytesRead <= 0) {
+                        // Handle disconnect or error
+                        close(fd);
+                        // Remove clientSocket from m_newConnectionsQueue if needed
+                        // Note: You might need to implement a method to remove a specific element from TSQueue
+                    } else {
+                        std::cout << "got " << number << std::endl;
+                        // give the buffer time to clean
+                        struct timespec ts;
+                        ts.tv_sec = 2;
+                        nanosleep(&ts, NULL);  // Sleep 2 seconds
+                        // Push the message (number) into the ActiveObject processing queue.
+                        m_processingQueue.push({fd, number});
+                    }
                 }
             }
         }
@@ -98,34 +117,26 @@ void Pipeline::receiveMessages() {
 }
 
 
-void Pipeline::processMessages() {
-    while (m_running) {
-        auto message = m_processingQueue.pop();
-        int clientSocket = message.first;
-        std::string msg = message.second;
+void Pipeline::processMessages(std::pair<int, long long> data) {
+    int clientFd = data.first;
+    long long number = data.second;
 
-        // Process message
-        long long number;
-        try {
-            number = std::stoll(msg);
-        } catch (...) {
-            send(clientSocket, "Invalid input\n", strlen("Invalid input\n"), 0);
-            close(clientSocket);
-            continue;
-        }
 
-        std::string response = (isPrime(number) ? "YES\n" : "NO\n");
-        send(clientSocket, response.c_str(), response.size(), 0);
-        close(clientSocket);
-    }
+    bool prime = isPrime(number);
+    std::string numStr = std::to_string(number);
+    const char* response = prime ? "YES" : "NO";
+
+    // Concatenate the number string and the response string
+    std::string combinedResponse = numStr + " " + response;
+
+    // Send the concatenated string over the socket
+    send(clientFd, combinedResponse.c_str(), combinedResponse.length(), 0);
 }
 
 bool Pipeline::isPrime(long long number) {
     if (number <= 1) return false;
-    if (number <= 3) return true;
-    if (number % 2 == 0 || number % 3 == 0) return false;
-    for (long long i = 5; i * i <= number; i += 6) {
-        if (number % i == 0 || number % (i + 2) == 0) return false;
+    for (long long i = 2; i * i <= number; i++) {
+        if (number % i == 0) return false;
     }
     return true;
 }

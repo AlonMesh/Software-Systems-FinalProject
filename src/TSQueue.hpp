@@ -21,13 +21,49 @@ private:
 
 public:
     // Pushes an element to the queue
-    void push(T item);
+    void push(T item) {
+        std::cout << "pushhhhhhhhhhhhhhhhhhhhhhhhh" << std::endl;
+
+        // Acquire lock
+        std::unique_lock<std::mutex> lock(m_mutex);
+
+        // Add item
+        m_queue.push(item);
+
+        // Notify one thread that is waiting
+        m_cond.notify_one();
+    }
 
     // Pops an element off the queue
-    T pop();
+    T pop() {
+        std::cout << "popppppppppppppppppppppppp" << std::endl;
+        // Acquire lock
+        std::unique_lock<std::mutex> lock(m_mutex);
+
+        // Wait until queue is not empty
+        m_cond.wait(lock, [this]() { return !m_queue.empty(); });
+
+        // Retrieve item
+        T item = m_queue.front();
+        m_queue.pop();
+
+        // Return item
+        return item;
+    }
+
+    int size(){
+        return m_queue.size();
+    }
+
 
     // Returns if the queue is empty
-    bool empty();
+    bool empty() {
+        // Acquire lock
+        std::unique_lock<std::mutex> lock(m_mutex);
+
+        // Check if queue is empty
+        return m_queue.empty();
+    }
 };
 
 #endif /* TSQUEUE_HPP */

@@ -74,7 +74,7 @@ void startClient(const char* serverAddress, int port, unsigned int seed, int tim
 
         // If socket is ready to be read
         if (FD_ISSET(sock, &readfds)) {
-            char response[4] = {0};  // Buffer for response
+            char response[20] = {0};  // Buffer for response
             int bytesReceived = recv(sock, response, sizeof(response) - 1, 0);
             if (bytesReceived < 0) {
                 std::cerr << "Receive failed" << std::endl;

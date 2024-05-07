@@ -31,7 +31,7 @@ LAUNCHER_OBJ := $(BUILD_DIR)/launcher.o
 LAUNCHER_TARGET := $(BUILD_DIR)/launcher
 
 # Add the new source files to your definitions
-PIPELINE_SRCS := $(SRC_DIR)/Pipeline.cpp $(SRC_DIR)/TSQueue.cpp $(SRC_DIR)/ActiveObject.cpp
+PIPELINE_SRCS := $(SRC_DIR)/Pipeline.cpp $(SRC_DIR)/TSQueue.hpp $(SRC_DIR)/ActiveObject.hpp
 PIPELINE_OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(PIPELINE_SRCS))
 PIPELINE_TARGET := $(BUILD_DIR)/pipeline
 
@@ -40,7 +40,7 @@ TEST_TARGET := $(BUILD_DIR)/test
 TEST_RUNNER := $(TEST_DIR)/TestRunner.cpp
 
 # Updating all target to build sieve, client, server, launcher, and test
-all: $(SIEVE_TARGET) $(CLIENT_TARGET) $(SERVER_TARGET) $(LAUNCHER_TARGET) $(PIPELINE_OBJS) $(TEST_TARGET)
+all: $(SIEVE_TARGET) $(CLIENT_TARGET) $(SERVER_TARGET) $(LAUNCHER_TARGET) $(PIPELINE_TARGET) $(TEST_TARGET)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(@D)
@@ -62,13 +62,14 @@ $(SERVER_TARGET): $(SERVER_OBJ) $(filter-out $(SIEVE_OBJ) $(CLIENT_OBJ) $(LAUNCH
 $(LAUNCHER_TARGET): $(LAUNCHER_OBJ) $(filter-out $(SIEVE_OBJ) $(CLIENT_OBJ) $(SERVER_OBJ) $(PIPELINE_OBJS), $(OBJS))
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-$(PIPELINE_TARGET): $(PIPELINE_OBJS) $(filter-out $(SIEVE_OBJ) $(CLIENT_OBJ) $(SERVER_OBJ) $(LAUNCHER_OBJ), $(OBJS))
+$(PIPELINE_TARGET): $(PIPELINE_OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-# TODO: Make the test target to build the test executable
+# Test target
 $(TEST_TARGET): $(TEST_RUNNER) $(TEST_OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(filter-out $(SIEVE_OBJ) $(LAUNCHER_OBJ) $(CLIENT_OBJ) $(SERVER_OBJ) $(PIPELINE_OBJS), $(OBJS))
 
+# Individual targets for running the programs
 sieve: $(SIEVE_TARGET)
 	./$(SIEVE_TARGET)
 
@@ -87,9 +88,9 @@ pipeline: $(PIPELINE_TARGET)
 test: $(TEST_TARGET)
 	./$(TEST_TARGET)
 
+# Clean target to remove the build directory
 clean:
 	rm -rf $(BUILD_DIR)
 
-all: $(SIEVE_TARGET) $(CLIENT_TARGET) $(SERVER_TARGET) $(LAUNCHER_TARGET) $(PIPELINE_TARGET) $(TEST_TARGET)
-
+# Ensure 'all' is up-to-date
 .PHONY: all sieve client server launcher test pipeline clean

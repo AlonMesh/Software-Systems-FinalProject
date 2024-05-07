@@ -8,14 +8,30 @@
 template<typename T>
 class ActiveObject {
 public:
-    ActiveObject(TSQueue<T>* queue, std::function<void(T&)> task);
+    ActiveObject(TSQueue<T>* queue, std::function<void(T&)> task)
+            : m_queue(queue), m_task(task), m_running(false) {
+        m_thread = std::thread(&ActiveObject::worker, this);
+    }
 
-    ~ActiveObject();
+    ~ActiveObject() {
+        stop();
+    }
 
-    void stop();
+    void stop() {
+        if (m_thread.joinable()) {
+            m_thread.join();
+        }
+    }
 
 private:
-    void worker();
+    void worker() {
+        while (true) {
+            if(!m_queue->empty()){
+                T item = m_queue->pop();
+                m_task(item); // Execute the provided task on each item
+            }
+        }
+    }
 
     TSQueue<T>* m_queue;
     std::function<void(T&)> m_task;
