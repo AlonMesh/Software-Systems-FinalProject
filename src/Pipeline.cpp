@@ -81,7 +81,7 @@ void Pipeline::receiveMessages() {
             continue; // Timeout, no messages received
         }
 
-        for (int i = 0; i < clientSockets.size(); ++i) {
+        for (size_t i = 0; i < clientSockets.size(); ++i) {
             int clientSocket = clientSockets[i];
             if (FD_ISSET(clientSocket, &tempfds)) {
                 long long number;

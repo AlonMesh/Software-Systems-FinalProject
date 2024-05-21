@@ -4,6 +4,9 @@
 #include <string>
 #include <vector>
 #include <sys/wait.h>
+#include <signal.h>
+
+std::vector<pid_t> childPIDs;
 
 bool validateArguments(int argc, char* argv[]) {
     // Check if the number of arguments is correct
@@ -40,23 +43,42 @@ bool validateArguments(int argc, char* argv[]) {
 }
 
 void launchClient(const char* serverAddress, int port, int seed, int delay) {
-    // Construct the command to launch a client using bash
-    std::string command = "./build/client ";
-    command += serverAddress;
-    command += " " + std::to_string(port);
-    command += " " + std::to_string(seed);
-    command += " " + std::to_string(delay);
-    command += " &";  // Run the client in the background
-    
-    // Execute the command using system()
-    int result = system(command.c_str());
-    
-    if (result != 0) {
-        std::cerr << "Failed to launch client using bash with command: `" << command << "`" << std::endl;
+    pid_t pid = fork();
+    if (pid == 0) { // Child process
+        // Construct the command to launch a client using exec
+        std::string command = "./build/client ";
+        command += serverAddress;
+        command += " " + std::to_string(port);
+        command += " " + std::to_string(seed);
+        command += " " + std::to_string(delay);
+
+        // Convert command string to char array for exec
+        std::vector<char> commandVec(command.begin(), command.end());
+        commandVec.push_back('\0');
+
+        execl("/bin/sh", "sh", "-c", commandVec.data(), (char *) NULL);
+        // If exec fails
+        perror("execl");
+        exit(1);
+    } else if (pid > 0) { // Parent process
+        childPIDs.push_back(pid);
+    } else {
+        perror("fork");
     }
 }
 
+void signalHandler(int signum) {
+    std::cout << "Caught signal " << signum << ", terminating clients..." << std::endl;
+    for (pid_t pid : childPIDs) {
+        kill(pid, SIGTERM);
+    }
+    exit(signum);
+}
+
 int main(int argc, char *argv[]) {
+    // Register signal handler for SIGINT
+    signal(SIGINT, signalHandler);
+
     // Validate command-line arguments
     if (!validateArguments(argc, argv)) {
         return 1;
@@ -74,6 +96,11 @@ int main(int argc, char *argv[]) {
     }
 
     std::cout << "Launcher has started with " << numClients << " clients." << std::endl;
+
+    // Wait for child processes to finish
+    for (pid_t pid : childPIDs) {
+        waitpid(pid, NULL, 0);
+    }
 
     return 0;
 }

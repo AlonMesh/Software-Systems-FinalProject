@@ -11,7 +11,7 @@
 
 void startClient(const char* serverAddress, int port, unsigned int seed, int timeSkip) {
     std::mt19937_64 rng(seed);
-    std::uniform_int_distribution<long long> dist(0, 1000000000000LL);
+    std::uniform_int_distribution<long long> dist(0, 40000000LL);
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
