@@ -22,7 +22,6 @@ private:
 public:
     // Pushes an element to the queue
     void push(T item) {
-        std::cout << "pushhhhhhhhhhhhhhhhhhhhhhhhh" << std::endl;
 
         // Acquire lock
         std::unique_lock<std::mutex> lock(m_mutex);
@@ -36,7 +35,6 @@ public:
 
     // Pops an element off the queue
     T pop() {
-        std::cout << "popppppppppppppppppppppppp" << std::endl;
         // Acquire lock
         std::unique_lock<std::mutex> lock(m_mutex);
 

@@ -37,48 +37,32 @@ bool validateInput(long long limit)
     return true;
 }
 
-std::vector<long long> sieveOfEratosthenes(long long limit)
-{
+std::vector<bool> sieveOfEratosthenes(long long limit) {
     // Check if the input is valid.
     if (!validateInput(limit)) {
-        return {};
+        return;
     }
 
-    // Create a boolean array "prime[0..limit]" and initialize all entries as true.
-    std::vector<bool> prime(limit + 1, true);
+    // Create a boolean vector to store whether a number is prime or not in the range [0, limit + 1]
+    std::vector<bool> isPrimeVector(limit + 1, true);
+
+    // Resize the isPrime vector to handle numbers up to the limit.
+    isPrimeVector.resize(limit + 1, true);
+
+    // Mark 0 and 1 as not prime.
+    isPrimeVector[0] = isPrimeVector[1] = false;
 
     // Traverse all numbers smaller than or equal to the square root of the limit.
-    for (long long p = 2; p * p <= limit; p++)
-    {
-        // If prime[p] is not changed, then it is a prime.
-        if (prime[p])
-        {
+    for (long long p = 2; p * p <= limit; p++) {
+        // If isPrime[p] is not changed, then it is a prime.
+        if (isPrimeVector[p]) {
             // Update all multiples of p.
-            for (long long i = p * p; i <= limit; i += p)
-            {
-                prime[i] = false;
+            for (long long i = p * p; i <= limit; i += p) {
+                isPrimeVector[i] = false;
             }
         }
     }
 
-    // Create a vector to store the prime numbers.
-    std::vector<long long> primes;
-
-    // Add all prime numbers to the vector.
-    for (long long p = 2; p <= limit; p++)
-    {
-        if (prime[p])
-        {
-            primes.push_back(p);
-        }
-    }
-
-    // For debugging purposes, print the prime numbers. // TODO: Remove this line.
-    for (long long p : primes)
-    {
-        std::cout << p << std::endl;
-    }
-
-    // Return the vector of prime numbers.
-    return primes;
+    // Return the vector of prime flags.
+    return isPrimeVector;
 }

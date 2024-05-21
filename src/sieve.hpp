@@ -10,8 +10,10 @@
  * This function runs the Sieve of Eratosthenes algorithm to find all prime numbers less than or equal to the given limit.
  *
  * @param limit The limit to find prime numbers up to.
+ * 
+ * @return A vector of boolean values to store whether a number is prime or not.
  */
-std::vector<long long> sieveOfEratosthenes(long long limit);
+std::vector<bool> sieveOfEratosthenes(long long limit);
 
 /**
  * @brief Validate the input.

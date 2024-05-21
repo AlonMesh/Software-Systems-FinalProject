@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <sys/select.h>
 
 bool isPrime(long long number) {
     if (number <= 1) return false;
@@ -15,23 +16,20 @@ bool isPrime(long long number) {
 }
 
 void handleClient(int clientSock) {
-    while (true) {
-        long long number;
-        ssize_t recvSize = recv(clientSock, &number, sizeof(number), 0);
-        if (recvSize < 0) {
-            std::cerr << "Error receiving data." << std::endl;
-            break;
-        } else if (recvSize == 0) {
-            // Client disconnected
-            std::cout << "Client disconnected." << std::endl;
-            break;
-        }
-
+    long long number;
+    ssize_t recvSize = recv(clientSock, &number, sizeof(number), 0);
+    if (recvSize < 0) {
+        std::cerr << "Error receiving data." << std::endl;
+        close(clientSock);
+    } else if (recvSize == 0) {
+        // Client disconnected
+        std::cout << "Client disconnected." << std::endl;
+        close(clientSock);
+    } else {
         bool prime = isPrime(number);
         const char* response = prime ? "YES" : "NO";
         send(clientSock, response, strlen(response), 0);
     }
-    close(clientSock);
 }
 
 void startServer(int port) {
@@ -52,28 +50,76 @@ void startServer(int port) {
     // Bind the socket to the address and port
     if (bind(serverSock, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
         std::cerr << "Bind failed" << std::endl;
+        close(serverSock);
         return;
     }
 
     // Listen for incoming connections
-    if (listen(serverSock, 1) < 0) { // Listen for only one connection
+    if (listen(serverSock, 10) < 0) { // Listen for up to 10 connections
         std::cerr << "Listen failed" << std::endl;
+        close(serverSock);
         return;
     }
 
     // Connection successful
     std::cout << "Server listening on port " << port << std::endl;
 
-    // Accept incoming connection
-    struct sockaddr_in clientAddr;
-    socklen_t clientLen = sizeof(clientAddr);
-    int clientSock = accept(serverSock, (struct sockaddr*)&clientAddr, &clientLen);
-    if (clientSock < 0) {
-        std::cerr << "Accept failed" << std::endl;
-    } else {
-        handleClient(clientSock);
+    // Accept incoming connections and handle them using select
+    fd_set masterSet, readSet;
+    FD_ZERO(&masterSet);
+    FD_SET(serverSock, &masterSet);
+    int maxSd = serverSock;
+
+    while (true) {
+        readSet = masterSet;
+        int activity = select(maxSd + 1, &readSet, NULL, NULL, NULL);
+
+        if (activity < 0) {
+            std::cerr << "Select error" << std::endl;
+            break;
+        }
+
+        for (int sd = 0; sd <= maxSd; sd++) {
+            if (FD_ISSET(sd, &readSet)) {
+                if (sd == serverSock) {
+                    // Accept new connection
+                    struct sockaddr_in clientAddr;
+                    socklen_t clientLen = sizeof(clientAddr);
+                    int clientSock = accept(serverSock, (struct sockaddr*)&clientAddr, &clientLen);
+                    if (clientSock < 0) {
+                        std::cerr << "Accept failed" << std::endl;
+                    } else {
+                        std::cout << "New connection, socket fd is " << clientSock << std::endl;
+                        FD_SET(clientSock, &masterSet);
+                        if (clientSock > maxSd) {
+                            maxSd = clientSock;
+                        }
+                    }
+                } else {
+                    // Handle client data
+                    long long number;
+                    ssize_t recvSize = recv(sd, &number, sizeof(number), 0);
+                    if (recvSize < 0) {
+                        std::cerr << "Error receiving data from client " << sd << std::endl;
+                        close(sd);
+                        FD_CLR(sd, &masterSet);
+                    } else if (recvSize == 0) {
+                        // Client disconnected
+                        std::cout << "Client " << sd << " disconnected." << std::endl;
+                        close(sd);
+                        FD_CLR(sd, &masterSet);
+                    } else {
+                        bool prime = isPrime(number);
+                        const char* response = prime ? "YES" : "NO";
+                        std::string combinedResponse = std::to_string(number) + " " + response;
+                        send(sd, combinedResponse.c_str(), combinedResponse.length(), 0);
+                    }
+                }
+            }
+        }
     }
-    
+
+    // Cleanup
     close(serverSock);
 }
 
