@@ -3,7 +3,6 @@
 #define MILLION 1000000 // 1 million
 #define MILLION40 40000000 // 40 million
 
-#include "sieve.hpp"  // Include the sieve header file for the sieveOfEratosthenes function
 #include "TSQueue.hpp"
 #include "ActiveObject.hpp"
 #include <vector>
@@ -20,6 +19,13 @@
 #include <ctime>
 #include <string>
 
+/**
+ * @brief ProducerConsumer class for managing client connections and processing messages.
+ * 
+ * This class manages client connections and processes messages using multiple threads. It performs
+ * the Sieve of Eratosthenes algorithm to determine prime numbers and handles client requests to check
+ * if numbers are prime.
+ */
 class ProducerConsumer {
 public:
     // Start the server and sieving process
@@ -52,6 +58,7 @@ private:
     std::queue<int> m_newConnectionsQueue;
     TSQueue<std::pair<int, long long>> m_processingQueue;
 
+    // Flag to determine if the server is running
     bool m_running = false;
 };
 

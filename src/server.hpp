@@ -1,6 +1,9 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
+#include <sys/select.h>
+#include <sys/types.h>  
+
 /**
  * @brief Start the server.
  *
@@ -15,9 +18,10 @@ void startServer(int port);
  *
  * This function handles the client by receiving a number from the client and sending a response.
  *
- * @param clientSock The client socket.
+ * @param masterSet The set of file descriptors.
+ * @param sd The socket descriptor.
  */
-void handleClient(int clientSock);
+void handleClient(fd_set& masterSet, int sd);
 
 /**
  * @brief Check if a number is prime.

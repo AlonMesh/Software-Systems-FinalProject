@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     int delay = std::stoi(argv[4]);
 
     for (int i = 0; i < numClients; ++i) {
-        int seed = i + 1; // Unique seed for each client
+        int seed = i + 1; // Unique seed for each client according to the index
         launchClient(serverAddress, port, seed, delay);
     }
 

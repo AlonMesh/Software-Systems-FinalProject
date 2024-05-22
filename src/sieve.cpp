@@ -73,7 +73,7 @@ void printSieveOfEratosthenes(long long limit)
         }
     }
 
-    // For debugging purposes, print the prime numbers.
+    // Print the prime numbers.
     for (long long p : primes)
     {
         std::cout << p << std::endl;
