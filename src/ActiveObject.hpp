@@ -26,7 +26,7 @@ public:
      * @param task The task to be executed on each item from the queue.
      */
     ActiveObject(TSQueue<T>* queue, std::function<void(T&)> task)
-            : m_queue(queue), m_task(task), m_running(false) {
+            : m_queue(queue), m_task(task) {
         m_thread = std::thread(&ActiveObject::worker, this);
     }
 
@@ -59,17 +59,14 @@ private:
      */
     void worker() {
         while (true) {
-            if(!m_queue->empty()){
-                T item = m_queue->pop();
-                m_task(item); // Execute the provided task on each item
-            }
+            T item = m_queue->pop();
+            m_task(item); // Execute the provided task on each item
         }
     }
 
     TSQueue<T>* m_queue;            // The thread-safe queue from which items are processed
     std::function<void(T&)> m_task; // The task to be executed on each item
     std::thread m_thread;           // The worker thread
-    bool m_running;                 // Indicates if the worker thread is running
 };
 
 #endif /* ACTIVEOBJECT_HPP */
